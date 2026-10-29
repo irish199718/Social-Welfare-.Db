@@ -1,6 +1,6 @@
 
 <?php
-$conn = mysqli_connect("localhost", "root", "", "gudes_library_database");
+$conn = mysqli_connect("localhost", "root", "", "social-welfare.db");
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
