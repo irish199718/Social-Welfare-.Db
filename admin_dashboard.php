@@ -26,14 +26,7 @@ $applications = $conn->query("
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>Admin Dashboard</title>
-<style>
-    body { font-family: Arial, sans-serif; background: #f8fafc; padding: 20px; margin: 0; }
-    .header { background: #1e3a8a; color: white; padding: 15px; display: flex; justify-content: space-between; border-radius: 6px; align-items: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 0.9em; }
-    th { background: #f1f5f9; }
-    .logout { color: white; background: #ef4444; padding: 6px 12px; text-decoration: none; border-radius: 4px; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="header">
