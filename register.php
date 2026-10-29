@@ -1,49 +1,80 @@
 <?php
 require_once 'config.php';
-$msg = ''; $error = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+$error = '';
+$msg = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
+    $password = password_hash(trim($_POST['password']), PASSWORD_DEFAULT);
     $role = $_POST['role'];
 
-    if (!empty($username) && !empty($password)) {
-        $hashed_pwd = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $conn->prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $username, $hashed_pwd, $role);
-        
+    // Check if username already exists
+    $check = $conn->prepare("SELECT user_id FROM users WHERE username = ?");
+    $check->bind_param("s", $username);
+    $check->execute();
+    $check->store_result();
+
+    if ($check->num_rows > 0) {
+        $error = "Username already taken!";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $username, $password, $role);
         if ($stmt->execute()) {
-            $msg = "Registered successfully! <a href='login.php'>Login here</a>";
+            $msg = "Registration successful! You can now login.";
         } else {
-            $error = "Username already taken.";
+            $error = "Something went wrong. Please try again.";
         }
         $stmt->close();
-    } else {
-        $error = "All fields required.";
+        
     }
+    $check->close();
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Register</title>
-<link rel="stylesheet" href="style.css">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Social Welfare System</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<div class="card">
-    <h2 style="text-align:center; color:#16a34a;">Register</h2>
-    <?php if($error): ?><p style="color:red; font-size:0.85em;"><?= $error ?></p><?php endif; ?>
-    <?php if($msg): ?><p style="color:green; font-size:0.85em;"><?= $msg ?></p><?php endif; ?>
-    <form method="POST">
-        <label>Username</label><input type="text" name="username" required>
-        <label>Password</label><input type="password" name="password" required>
-        <label>Role</label>
-        <select name="role">
-            <option value="beneficiary">Beneficiary</option>
-            <option value="admin">Social Worker (Admin)</option>
-        </select>
-        <button type="submit">Register</button>
-    </form>
-    <p style="text-align:center; font-size:0.85em; margin-top:15px;"><a href="login.php">Back to Login</a></p>
-</div>
+<body class="auth-body">
+
+    <div class="auth-card">
+        <h2>Create Account</h2>
+
+        <?php if (!empty($error)): ?>
+            <div class="error-msg" style="color: #dc2626; background-color: #fee2e2; padding: 8px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
+                <?= $error ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($msg)): ?>
+            <div class="success-msg" style="color: #16a34a; background-color: #dcfce7; padding: 8px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
+                <?= $msg ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Username</label>
+            <input type="text" name="username" required placeholder="Choose a username">
+
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Password</label>
+            <input type="password" name="password" required placeholder="Choose a password">
+
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Role</label>
+            <select name="role" required>
+                <option value="beneficiary">Beneficiary</option>
+                <option value="admin">Admin / Social Worker</option>
+            </select>
+
+            <button type="submit" style="margin-top: 10px;">Register</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="login.php" style="color: #2563eb; font-size: 0.85rem; text-decoration: none; font-weight: 600;">Already have an account? Log In</a>
+        </div>
+    </div>
+
 </body>
 </html>
