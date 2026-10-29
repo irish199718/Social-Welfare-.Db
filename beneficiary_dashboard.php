@@ -17,12 +17,7 @@ $stmt->close();
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>Beneficiary Portal</title>
-<style>
-    body { font-family: Arial, sans-serif; background: #f8fafc; padding: 20px; margin: 0; }
-    .header { background: #15803d; color: white; padding: 15px; display: flex; justify-content: space-between; border-radius: 6px; align-items: center; }
-    .card { background: white; padding: 20px; border-radius: 6px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .logout { color: white; background: #ef4444; padding: 6px 12px; text-decoration: none; border-radius: 4px; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="header">
