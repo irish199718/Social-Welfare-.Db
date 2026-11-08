@@ -386,10 +386,6 @@ button:active {
     margin-top: 25px;
     padding: 14px;
     background-color: var(--muted-bg);
-    border-radius: 8px;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.7;
 }
 
 .demo-creds strong {
