@@ -389,7 +389,6 @@ button:active {
     border-radius: 8px;
     font-size: 0.78rem;
     color: var(--text-muted);
-    line-height: 1.7;
 }
 
 .demo-creds strong {
