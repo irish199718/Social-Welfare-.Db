@@ -1,15 +1,20 @@
 /* ==========================================================
-   MODERN ENTERPRISE THEME - SOCIAL WELFARE SYSTEM
+   SOCIAL WELFARE ASSISTANCE & DISTRIBUTION SYSTEM
+   Modern enterprise theme (fixed version)
    ========================================================== */
 :root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
+    --primary: #0891b2;
+    --primary-dark: #0e7490;
     --success: #16a34a;
     --success-bg: #dcfce7;
     --warning: #d97706;
     --warning-bg: #fef3c7;
     --danger: #dc2626;
     --danger-bg: #fee2e2;
+    --info: #2563eb;
+    --info-bg: #dbeafe;
+    --muted: #64748b;
+    --muted-bg: #f1f5f9;
     --bg-color: #f8fafc;
     --card-bg: #ffffff;
     --text-main: #0f172a;
@@ -32,7 +37,7 @@ body {
 }
 
 /* ==========================================================
-   HEADER / NAVIGATION BAR
+   HEADER / NAV BAR
    ========================================================== */
 .header {
     background: var(--card-bg);
@@ -58,8 +63,7 @@ body {
     color: var(--text-muted);
 }
 
-/* Logout Button */
-.logout-btn, a.logout {
+a.logout, .logout-btn {
     background-color: var(--danger-bg);
     color: var(--danger);
     padding: 8px 16px;
@@ -70,23 +74,35 @@ body {
     transition: all 0.2s ease;
 }
 
-.logout-btn:hover, a.logout:hover {
+a.logout:hover, .logout-btn:hover {
     background-color: var(--danger);
     color: white;
 }
 
 /* ==========================================================
-   HEADINGS & TITLES
+   HEADINGS
    ========================================================== */
 h3 {
     color: var(--text-main);
-    margin-bottom: 15px;
+    margin: 25px 0 15px 0;
     font-size: 1.2rem;
     font-weight: 600;
 }
 
+h3 small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+p.muted {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-bottom: 10px;
+}
+
 /* ==========================================================
-   TABLES (Clean, Modern & Card-like)
+   TABLES
    ========================================================== */
 table {
     width: 100%;
@@ -103,6 +119,7 @@ th, td {
     padding: 14px 18px;
     text-align: left;
     font-size: 0.88rem;
+    vertical-align: middle;
 }
 
 th {
@@ -127,35 +144,31 @@ tr:hover {
     background-color: #f8fafc;
 }
 
+td.empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 30px;
+}
+
 /* ==========================================================
-   STATUS BADGES (Para sa Tables)
+   STATUS BADGES (fixed: uses real CSS classes, NOT :has-text())
    ========================================================== */
-td strong {
+.status-badge {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.78rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
-/* Depende sa text sa status sa imong database */
-td strong:has-text("Approved"), .status-Approved {
-    background-color: var(--success-bg);
-    color: var(--success);
-}
-
-td strong:has-text("Pending"), .status-Pending {
-    background-color: var(--warning-bg);
-    color: var(--warning);
-}
-
-td strong:has-text("Rejected"), .status-Rejected {
-    background-color: var(--danger-bg);
-    color: var(--danger);
-}
+.status-pending   { background-color: var(--warning-bg); color: var(--warning); }
+.status-approved  { background-color: var(--success-bg); color: var(--success); }
+.status-rejected  { background-color: var(--danger-bg);  color: var(--danger);  }
 
 /* ==========================================================
-   DROPDOWNS & FORMS IN ADMIN TABLE
+   DROPDOWNS / SELECTS (used in table actions)
    ========================================================== */
 select {
     padding: 6px 10px;
@@ -171,68 +184,74 @@ select {
 select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
 }
 
 /* ==========================================================
-   AUTH PAGES (Login & Register Cards)
+   CARDS
    ========================================================== */
-.auth-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-}
-
-.auth-card {
+.card {
     background: var(--card-bg);
-    padding: 40px;
-    border-radius: 16px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    margin-top: 25px;
 }
 
-.auth-card h2 {
-    text-align: center;
-    color: var(--primary);
-    margin-bottom: 24px;
-    font-size: 1.5rem;
-    font-weight: 700;
+.card h3 {
+    margin-top: 0;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="number"],
-select {
-    width: 100%;
+.card p {
+    margin: 6px 0;
+    font-size: 0.92rem;
+}
+
+.card p strong {
+    display: inline-block;
+    width: 140px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* ==========================================================
+   GRID FORM
+   ========================================================== */
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.grid-form input,
+.grid-form select {
     padding: 11px 14px;
-    margin: 6px 0 16px 0;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    font-size: 0.95rem;
-    transition: all 0.2s;
+    font-size: 0.9rem;
     background-color: #fff;
 }
 
-input:focus {
+.grid-form input:focus,
+.grid-form select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
 }
 
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
 button {
-    width: 100%;
     background-color: var(--primary);
     color: white;
-    padding: 12px;
+    padding: 12px 20px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     transition: background-color 0.2s, transform 0.1s;
 }
 
@@ -242,4 +261,154 @@ button:hover {
 
 button:active {
     transform: scale(0.98);
+}
+
+/* ==========================================================
+   FEEDBACK MESSAGES
+   ========================================================== */
+.feedback {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.feedback.success {
+    background-color: var(--success-bg);
+    color: var(--success);
+    border-left: 4px solid var(--success);
+}
+
+.feedback.error {
+    background-color: var(--danger-bg);
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
+}
+
+/* ==========================================================
+   AUTH PAGES (Login & Register)
+   ========================================================== */
+.auth-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #0e7490 100%);
+    padding: 20px;
+}
+
+.auth-card {
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-card h2 {
+    text-align: center;
+    color: var(--primary);
+    margin-bottom: 6px;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.auth-subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+}
+
+.auth-card label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 10px;
+}
+
+.auth-card input,
+.auth-card select {
+    width: 100%;
+    padding: 11px 14px;
+    margin: 6px 0 8px 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: #fff;
+}
+
+.auth-card input:focus,
+.auth-card select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+}
+
+.auth-card button {
+    width: 100%;
+    margin-top: 14px;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.auth-link a {
+    color: var(--primary);
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+.error-msg,
+.success-msg {
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.error-msg   { color: var(--danger);  background-color: var(--danger-bg);  }
+.success-msg { color: var(--success); background-color: var(--success-bg); }
+
+.demo-creds {
+    margin-top: 25px;
+    padding: 14px;
+    background-color: var(--muted-bg);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+.demo-creds strong {
+    color: var(--text-main);
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+@media (max-width: 768px) {
+    body { padding: 15px; }
+    .header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    .grid-form {
+        grid-template-columns: 1fr;
+    }
+    table { font-size: 0.78rem; }
+    th, td { padding: 10px 8px; }
 }
