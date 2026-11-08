@@ -89,16 +89,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
     } elseif (empty($application_date)) {
         $feedback = "Please pick an application date.";
         $feedback_type = 'error';
-    } else {
+        } else {
+        // Capture optional message (may be empty)
+        $message = isset($_POST['message']) ? trim($_POST['message']) : '';
+        $message_to_save = $message === '' ? null : $message;
+
         // Auto-generate application_id
         $application_id = 'APP-' . strtoupper(substr(uniqid(), -6));
 
         try {
             $stmt = $conn->prepare("
-                INSERT INTO applications (application_id, beneficiary_id, program, application_date, eligibility_status, approved_amount)
-                VALUES (?, ?, ?, ?, 'Pending', 0.00)
+                INSERT INTO applications (application_id, beneficiary_id, program, application_date, request_message, eligibility_status, approved_amount)
+                VALUES (?, ?, ?, ?, ?, 'Pending', 0.00)
             ");
-            $stmt->bind_param("ssss", $application_id, $profile['beneficiary_id'], $program, $application_date);
+            $stmt->bind_param("sssss", $application_id, $profile['beneficiary_id'], $program, $application_date, $message_to_save);
             $stmt->execute();
             $stmt->close();
             $feedback = "Application $application_id submitted! Status: Pending. Please wait for the social worker to review it.";
