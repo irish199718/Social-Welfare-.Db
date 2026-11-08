@@ -4,6 +4,7 @@
  * Role: beneficiary
  * Features:
  *   - Shows the beneficiary's profile (name, ID, household, address)
+ *   - Lets the beneficiary UPDATE their name and address
  *   - Lets the beneficiary SUBMIT a new assistance application (BR2)
  *   - Lists only the beneficiary's own applications
  *   - Lists the disbursements released for each of their applications (BR4)
@@ -33,11 +34,52 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'beneficiary') {
  $profile = $stmt->get_result()->fetch_assoc();
  $stmt->close();
 
+// ---------- Handle profile update ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && $profile) {
+    $new_name    = trim($_POST['beneficiary_name']);
+    $new_address = trim($_POST['address']);
+
+    if (empty($new_name)) {
+        $feedback = "Name cannot be empty.";
+        $feedback_type = 'error';
+    } elseif (empty($new_address)) {
+        $feedback = "Address cannot be empty.";
+        $feedback_type = 'error';
+    } else {
+        // Transaction: update beneficiary name + household address
+        $conn->begin_transaction();
+        try {
+            // 1. Update beneficiary name
+            $bstmt = $conn->prepare("UPDATE beneficiaries SET beneficiary_name = ? WHERE beneficiary_id = ?");
+            $bstmt->bind_param("ss", $new_name, $profile['beneficiary_id']);
+            $bstmt->execute();
+            $bstmt->close();
+
+            // 2. Update household address
+            $hstmt = $conn->prepare("UPDATE households SET address = ? WHERE household_id = ?");
+            $hstmt->bind_param("ss", $new_address, $profile['household_id']);
+            $hstmt->execute();
+            $hstmt->close();
+
+            $conn->commit();
+            $feedback = "Profile updated successfully!";
+            $feedback_type = 'success';
+
+            // Refresh the profile variable so the form shows the new values
+            $profile['beneficiary_name'] = $new_name;
+            $profile['address'] = $new_address;
+        } catch (Exception $e) {
+            $conn->rollback();
+            $feedback = "Error updating profile: " . $e->getMessage();
+            $feedback_type = 'error';
+        }
+    }
+}
+
 // ---------- Handle new application submission ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application']) && $profile) {
     $program = trim($_POST['program']);
     $application_date = $_POST['application_date'];
-    $message = trim($_POST['message']);
 
     // Validate program against allowed list
     $allowed_programs = ['Emergency Aid', 'Food Assistance', 'Educational Aid', 'Medical Assistance', 'Burial Assistance', 'Calamity Aid'];
@@ -134,6 +176,18 @@ if ($profile) {
     <p><strong>Name:</strong> <?= htmlspecialchars($profile['beneficiary_name']) ?></p>
     <p><strong>Household:</strong> <?= htmlspecialchars($profile['household_id']) ?>
         (<?= htmlspecialchars($profile['address']) ?>)</p>
+</div>
+
+<!-- ===================== UPDATE PROFILE ===================== -->
+<div class="card">
+    <h3>Update My Profile</h3>
+    <p class="muted">Update your real name and household address. Your Beneficiary ID and Household ID will not change.</p>
+    <form method="POST" class="grid-form" style="grid-template-columns: 1fr 2fr 1fr;">
+        <input type="text" name="beneficiary_name" value="<?= htmlspecialchars($profile['beneficiary_name']) ?>" placeholder="Your full name" required>
+        <input type="text" name="address" value="<?= htmlspecialchars($profile['address']) ?>" placeholder="Your household address" required>
+        <input type="hidden" name="update_profile" value="1">
+        <button type="submit">Update Profile</button>
+    </form>
 </div>
 
 <!-- ===================== APPLY FOR ASSISTANCE ===================== -->
