@@ -4,7 +4,8 @@
  * Role: beneficiary
  * Features:
  *   - Shows the beneficiary's profile (name, ID, household, address)
- *   - Lists only the beneficiary's own applications (BR2)
+ *   - Lets the beneficiary SUBMIT a new assistance application (BR2)
+ *   - Lists only the beneficiary's own applications
  *   - Lists the disbursements released for each of their applications (BR4)
  *   - Beneficiary CANNOT approve applications or release aid (BR5 - admin only)
  */
@@ -17,6 +18,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'beneficiary') {
 }
 
  $user_id = $_SESSION['user_id'];
+ $feedback = '';
+ $feedback_type = '';
 
 // Fetch linked profile information
  $stmt = $conn->prepare("
@@ -29,6 +32,41 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'beneficiary') {
  $stmt->execute();
  $profile = $stmt->get_result()->fetch_assoc();
  $stmt->close();
+
+// ---------- Handle new application submission ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application']) && $profile) {
+    $program = trim($_POST['program']);
+    $application_date = $_POST['application_date'];
+    $message = trim($_POST['message']);
+
+    // Validate program against allowed list
+    $allowed_programs = ['Emergency Aid', 'Food Assistance', 'Educational Aid', 'Medical Assistance', 'Burial Assistance', 'Calamity Aid'];
+    if (!in_array($program, $allowed_programs)) {
+        $feedback = "Invalid program selected.";
+        $feedback_type = 'error';
+    } elseif (empty($application_date)) {
+        $feedback = "Please pick an application date.";
+        $feedback_type = 'error';
+    } else {
+        // Auto-generate application_id
+        $application_id = 'APP-' . strtoupper(substr(uniqid(), -6));
+
+        try {
+            $stmt = $conn->prepare("
+                INSERT INTO applications (application_id, beneficiary_id, program, application_date, eligibility_status, approved_amount)
+                VALUES (?, ?, ?, ?, 'Pending', 0.00)
+            ");
+            $stmt->bind_param("ssss", $application_id, $profile['beneficiary_id'], $program, $application_date);
+            $stmt->execute();
+            $stmt->close();
+            $feedback = "Application $application_id submitted! Status: Pending. Please wait for the social worker to review it.";
+            $feedback_type = 'success';
+        } catch (mysqli_sql_exception $e) {
+            $feedback = "Error submitting application: " . $e->getMessage();
+            $feedback_type = 'error';
+        }
+    }
+}
 
 // Fetch own applications + total released per app
  $my_apps = null;
@@ -59,6 +97,9 @@ if ($profile) {
     $my_disbursements = $d->get_result();
     $d->close();
 }
+
+// Default date for the form (today)
+ $today = date('Y-m-d');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,6 +119,10 @@ if ($profile) {
     </div>
 </div>
 
+<?php if ($feedback): ?>
+    <div class="feedback <?= $feedback_type ?>"><?= htmlspecialchars($feedback) ?></div>
+<?php endif; ?>
+
 <?php if (!$profile): ?>
     <div class="feedback error">Your account is not yet linked to a beneficiary profile. Please contact the social worker / administrator.</div>
 <?php else: ?>
@@ -89,6 +134,27 @@ if ($profile) {
     <p><strong>Name:</strong> <?= htmlspecialchars($profile['beneficiary_name']) ?></p>
     <p><strong>Household:</strong> <?= htmlspecialchars($profile['household_id']) ?>
         (<?= htmlspecialchars($profile['address']) ?>)</p>
+</div>
+
+<!-- ===================== APPLY FOR ASSISTANCE ===================== -->
+<div class="card">
+    <h3>Apply for Assistance</h3>
+    <p class="muted">Submit a new application. The social worker will review it and update the status.</p>
+    <form method="POST" class="grid-form" style="grid-template-columns: 1.5fr 1fr 2fr 1fr;">
+        <select name="program" required>
+            <option value="">-- Select Program --</option>
+            <option value="Emergency Aid">Emergency Aid</option>
+            <option value="Food Assistance">Food Assistance</option>
+            <option value="Educational Aid">Educational Aid</option>
+            <option value="Medical Assistance">Medical Assistance</option>
+            <option value="Burial Assistance">Burial Assistance</option>
+            <option value="Calamity Aid">Calamity Aid</option>
+        </select>
+        <input type="date" name="application_date" value="<?= $today ?>" required>
+        <input type="text" name="message" placeholder="Optional: brief description of your request">
+        <input type="hidden" name="submit_application" value="1">
+        <button type="submit">Submit Application</button>
+    </form>
 </div>
 
 <!-- ===================== MY APPLICATIONS ===================== -->
@@ -110,7 +176,7 @@ if ($profile) {
         </tr>
         <?php endwhile; ?>
     <?php else: ?>
-        <tr><td colspan="6" class="empty">You have not submitted any applications yet.</td></tr>
+        <tr><td colspan="6" class="empty">You have not submitted any applications yet. Use the form above to apply.</td></tr>
     <?php endif; ?>
 </table>
 
