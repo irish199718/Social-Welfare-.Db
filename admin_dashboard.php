@@ -119,7 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------- Fetch data for display ----------
  $applications = $conn->query("
     SELECT a.application_id, b.beneficiary_name, h.household_id, h.address,
-           a.program, a.application_date, a.eligibility_status, a.approved_amount,
+           a.program, a.application_date, a.request_message,
+           a.eligibility_status, a.approved_amount,
            COALESCE((SELECT SUM(d.amount_php) FROM disbursements d WHERE d.application_id = a.application_id), 0) AS total_released
     FROM applications a
     JOIN beneficiaries b ON a.beneficiary_id = b.beneficiary_id
