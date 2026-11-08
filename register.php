@@ -1,15 +1,23 @@
 <?php
+/**
+ * register.php
+ * Self-registration is restricted to the BENEFICIARY role only.
+ * Admin (social worker) accounts are seeded via SQL -- not self-registered,
+ * because allowing users to pick "admin" at signup is an RBAC security hole.
+ */
 require_once 'config.php';
 
-$error = '';
-$msg = '';
+ $error = '';
+ $msg   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = password_hash(trim($_POST['password']), PASSWORD_DEFAULT);
-    $role = $_POST['role'];
+    $password = trim($_POST['password']);
 
-    // Check if username already exists
+    // Server-side: role is forced to beneficiary (NEVER trust a form field for role)
+    $role = 'beneficiary';
+    $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
     $check = $conn->prepare("SELECT user_id FROM users WHERE username = ?");
     $check->bind_param("s", $username);
     $check->execute();
@@ -18,15 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($check->num_rows > 0) {
         $error = "Username already taken!";
     } else {
-        $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $username, $password, $role);
+        $stmt = $conn->prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $username, $password_hash, $role);
         if ($stmt->execute()) {
-            $msg = "Registration successful! You can now login.";
+            $msg = "Registration successful! You can now log in. Note: an admin must link your account to a beneficiary profile before you can see your records.";
         } else {
             $error = "Something went wrong. Please try again.";
         }
         $stmt->close();
-        
     }
     $check->close();
 }
@@ -35,44 +42,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register - Social Welfare System</title>
+    <title>Register - Social Welfare Assistance System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="auth-body">
 
     <div class="auth-card">
-        <h2>Create Account</h2>
+        <h2>Create Beneficiary Account</h2>
+        <p class="auth-subtitle">Beneficiaries may self-register; social worker accounts are managed separately.</p>
 
         <?php if (!empty($error)): ?>
-            <div class="error-msg" style="color: #dc2626; background-color: #fee2e2; padding: 8px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
-                <?= $error ?>
-            </div>
+            <div class="error-msg"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
         <?php if (!empty($msg)): ?>
-            <div class="success-msg" style="color: #16a34a; background-color: #dcfce7; padding: 8px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
-                <?= $msg ?>
-            </div>
+            <div class="success-msg"><?= htmlspecialchars($msg) ?></div>
         <?php endif; ?>
 
         <form method="POST">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Username</label>
+            <label>Username</label>
             <input type="text" name="username" required placeholder="Choose a username">
 
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Password</label>
+            <label>Password</label>
             <input type="password" name="password" required placeholder="Choose a password">
 
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Role</label>
-            <select name="role" required>
-                <option value="beneficiary">Beneficiary</option>
-                <option value="admin">Admin / Social Worker</option>
-            </select>
-
-            <button type="submit" style="margin-top: 10px;">Register</button>
+            <button type="submit">Register</button>
         </form>
 
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="login.php" style="color: #2563eb; font-size: 0.85rem; text-decoration: none; font-weight: 600;">Already have an account? Log In</a>
+        <div class="auth-link">
+            <a href="login.php">Already have an account? Log In</a>
         </div>
     </div>
 
