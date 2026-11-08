@@ -176,9 +176,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- ===================== APPLICATIONS ===================== -->
 <h3>Assistance Applications</h3>
 <table>
-    <tr>
+       <tr>
         <th>App ID</th><th>Beneficiary</th><th>Household</th><th>Address</th>
-        <th>Program</th><th>Date</th><th>Status</th><th>Approved</th><th>Released</th><th>Action</th>
+        <th>Program</th><th>Date</th><th>Request Message</th><th>Status</th><th>Approved</th><th>Released</th><th>Action</th>
     </tr>
     <?php while($row = $applications->fetch_assoc()): ?>
     <tr>
@@ -188,6 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <td><?= htmlspecialchars($row['address']) ?></td>
         <td><?= htmlspecialchars($row['program']) ?></td>
         <td><?= $row['application_date'] ?></td>
+        <td><?= htmlspecialchars($row['request_message'] ?? '(none)') ?></td>
         <td><span class="status-badge status-<?= strtolower($row['eligibility_status']) ?>"><?= $row['eligibility_status'] ?></span></td>
         <td>PHP <?= number_format($row['approved_amount'], 2) ?></td>
         <td>PHP <?= number_format($row['total_released'], 2) ?></td>
