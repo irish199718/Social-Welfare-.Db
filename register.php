@@ -3,9 +3,17 @@
  * register.php
  * Self-registration for BENEFICIARY role only.
  *
- * UPDATE: Now automatically creates a beneficiary profile AND links it
- * to the new user account. No admin action needed.
- * Admin (social worker) accounts are seeded via SQL only.
+ * WHAT THIS DOES:
+ *   1. Creates a login account in `users` (role = beneficiary, forced server-side)
+ *   2. Auto-creates a household row for the new person
+ *   3. Auto-creates a beneficiary profile with beneficiary_name = username
+ *      and user_id = NULL (NOT yet linked)
+ *   4. The admin must then use the "Link Beneficiary Profile" form on the
+ *      admin dashboard to verify identity and connect the user account.
+ *
+ * Because the beneficiary_name is set to the username, the admin sees
+ * matching names in both dropdowns of the Link form (e.g., "lili" on the
+ * left, "lili (user #9)" on the right), making the matching obvious.
  */
 require_once 'config.php';
 
@@ -29,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($check->num_rows > 0) {
         $error = "Username already taken!";
     } else {
-        // Transaction: create user, create beneficiary profile, link them
+        // Transaction: create user + household + beneficiary (unlinked)
         $conn->begin_transaction();
         try {
             // 1. Create the login account
@@ -39,30 +47,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_user_id = $stmt->insert_id;
             $stmt->close();
 
-            // 2. Auto-generate IDs for the new beneficiary
-            //    beneficiary_id: B-### (zero-padded based on user_id)
-            //    household_id: HH-### (a new household for this person)
-            $beneficiary_id = 'B-' . str_pad($new_user_id + 10, 2, '0', STR_PAD_LEFT);
-            $household_id   = 'HH-' . str_pad($new_user_id + 10, 02, '0', STR_PAD_LEFT);
+            // 2. Auto-generate IDs based on the new user_id
+            //    This avoids collisions with existing IDs (B-01, B-02, B-03 from seed data)
+            $seq = $new_user_id + 10;
+            $beneficiary_id = 'B-' . str_pad($seq, 2, '0', STR_PAD_LEFT);
+            $household_id   = 'HH-' . str_pad($seq, 2, '0', STR_PAD_LEFT);
 
-            // 3. Create a household row (address is blank - admin can update later)
+            // 3. Create a household row (address is a placeholder; admin can update later)
             $hstmt = $conn->prepare("INSERT INTO households (household_id, address) VALUES (?, '(Please update address)')");
             $hstmt->bind_param("s", $household_id);
             $hstmt->execute();
             $hstmt->close();
 
-            // 4. Create the beneficiary profile linked to this user
-            //    Name defaults to the username; admin can update it later
-            $bstmt = $conn->prepare("INSERT INTO beneficiaries (beneficiary_id, beneficiary_name, household_id, user_id) VALUES (?, ?, ?, ?)");
-            $bstmt->bind_param("sssi", $beneficiary_id, $username, $household_id, $new_user_id);
+            // 4. Create the beneficiary profile with beneficiary_name = username
+            //    user_id is NULL -> admin must link via the Link form
+            $bstmt = $conn->prepare("INSERT INTO beneficiaries (beneficiary_id, beneficiary_name, household_id, user_id) VALUES (?, ?, ?, NULL)");
+            $bstmt->bind_param("sss", $beneficiary_id, $username, $household_id);
             $bstmt->execute();
             $bstmt->close();
 
             $conn->commit();
-            $msg = "Registration successful! Your Beneficiary ID is $beneficiary_id. You can now log in.";
+            $msg = "Registration successful! A beneficiary profile ($beneficiary_id) has been created for you. "
+                 . "Please visit the MSWDO office so the social worker can verify your identity and link your account. "
+                 . "Once linked, you can log in to see your records.";
         } catch (Exception $e) {
             $conn->rollback();
-            $error = "Something went wrong. Please try again. (" . $e->getMessage() . ")";
+            $error = "Something went wrong. Please try again.";
         }
     }
     $check->close();
@@ -79,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="auth-card">
         <h2>Create Beneficiary Account</h2>
-        <p class="auth-subtitle">A beneficiary profile will be created for you automatically.</p>
+        <p class="auth-subtitle">A pending beneficiary profile will be created in your name for verification by the social worker.</p>
 
         <?php if (!empty($error)): ?>
             <div class="error-msg"><?= htmlspecialchars($error) ?></div>
