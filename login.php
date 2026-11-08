@@ -1,21 +1,26 @@
 <?php
+/**
+ * login.php
+ * Authenticates a user against the `users` table.
+ */
 require_once 'config.php';
 
-$error = '';
+ $error = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    $stmt = $conn->prepare("SELECT user_id, username, password, role FROM users WHERE username = ?");
+    $stmt = $conn->prepare("SELECT user_id, username, password_hash, role FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($row = $result->fetch_assoc()) {
-        if (password_verify($password, $row['password'])) {
-            $_SESSION['user_id'] = $row['user_id'];
+        if (password_verify($password, $row['password_hash'])) {
+            $_SESSION['user_id']  = $row['user_id'];
             $_SESSION['username'] = $row['username'];
-            $_SESSION['role'] = $row['role'];
+            $_SESSION['role']     = $row['role'];
 
             if ($row['role'] === 'admin') {
                 header("Location: admin_dashboard.php");
@@ -36,32 +41,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Social Welfare System</title>
+    <title>Login - Social Welfare Assistance System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="auth-body">
 
     <div class="auth-card">
-        <h2>System Login</h2>
+        <h2>MSWDO Portal</h2>
+        <p class="auth-subtitle">Social Welfare Assistance &amp; Distribution</p>
 
         <?php if (!empty($error)): ?>
-            <div class="error-msg" style="color: #dc2626; background-color: #fee2e2; padding: 8px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
-                <?= $error ?>
-            </div>
+            <div class="error-msg"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
         <form method="POST">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Username</label>
+            <label>Username</label>
             <input type="text" name="username" required placeholder="Enter your username">
 
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Password</label>
+            <label>Password</label>
             <input type="password" name="password" required placeholder="Enter your password">
 
-            <button type="submit" style="margin-top: 10px;">Log In</button>
+            <button type="submit">Log In</button>
         </form>
 
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="register.php" style="color: #2563eb; font-size: 0.85rem; text-decoration: none; font-weight: 600;">Create Account</a>
+        <div class="auth-link">
+            <a href="register.php">Create Beneficiary Account</a>
+        </div>
+
+        <div class="demo-creds">
+            <strong>Demo logins:</strong><br>
+            social_worker_1 / admin123 (Admin / Social Worker)<br>
+            nina_paz / nina123 (Beneficiary)<br>
+            rafi_cruz / rafi123 (Beneficiary)
         </div>
     </div>
 
