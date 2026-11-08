@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $chk->close();
 
         if (!$row) {
-            $feedback = "Application.";
+            $feedback = "Application not found.";
             $feedback_type = 'error';
         } elseif ($row['eligibility_status'] !== 'Approved') {
             $feedback = "BR5 violation: application $app_id is not Approved; cannot release aid.";
